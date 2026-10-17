@@ -38,7 +38,7 @@ function jsonOption(value: string | undefined, flag: string, kind: 'array' | 'ob
   try {
     parsed = JSON.parse(value);
   } catch {
-    throw bad(`${flag} is not valid JSON.`, `Pass a JSON ${kind}, e.g. ${kind === 'array' ? `${flag} '[{"id":"country","value":"US"}]'` : `${flag} '{"key":"value"}'`}`);
+    throw bad(`${flag} is not valid JSON.`, `Pass a JSON ${kind}, e.g. ${kind === 'array' ? `${flag} '[{"name":"country","values":["US"]}]'` : `${flag} '{"key":"value"}'`}`);
   }
   const ok = kind === 'array' ? Array.isArray(parsed) : parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed);
   if (!ok) throw bad(`${flag} must be a JSON ${kind}.`);
@@ -199,7 +199,9 @@ export function registerCommands(program: Command): void {
           const data = await apiGet(account.apiKey, `/projects/${encodeURIComponent(project.id)}/charts/${name}/options`, { realtime: true });
           return { project, chart: name, options: data };
         });
-        const names = (list: any): string => (Array.isArray(list) ? list.map((x: any) => x.id).join(', ') : '') || '-';
+        // Ids can be opaque (resolutions are "0", "1", ...), so the display name is shown whenever it says more than the id.
+        const label = (x: any): string => (x.display_name && String(x.display_name).toLowerCase() !== String(x.id).toLowerCase() ? `${x.id}=${x.display_name}` : String(x.id));
+        const names = (list: any): string => (Array.isArray(list) ? list.map(label).join(', ') : '') || '-';
         report(results, opts.json, (r) =>
           [
             `${r.account} (${r.project.name ?? r.project.id}): ${name}`,

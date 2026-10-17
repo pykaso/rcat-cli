@@ -71,7 +71,7 @@ function fake(req: IncomingMessage, res: ServerResponse): void {
   }
   if (rest === 'charts/arr') return send(res, 200, { display_name: 'ARR', values: [[1, 2], [3, 4]] });
   if (rest === 'charts/mrr/options') {
-    return send(res, 200, { resolutions: [{ id: 'day', display_name: 'Day' }, { id: 'month', display_name: 'Month' }], segments: [{ id: 'country', display_name: 'Country' }], filters: [{ id: 'platform', display_name: 'Platform', options: [{ id: 'ios', display_name: 'iOS' }] }], user_selectors: {} });
+    return send(res, 200, { resolutions: [{ id: '0', display_name: 'Day' }, { id: '2', display_name: 'Month' }], segments: [{ id: 'country', display_name: 'Country' }], filters: [{ id: 'platform', display_name: 'Platform', options: [{ id: 'ios', display_name: 'iOS' }] }], user_selectors: {} });
   }
   send(res, 404, { message: 'nothing here' });
 }
@@ -291,12 +291,12 @@ test('revenue: no TOTAL when currencies differ', async () => {
 
 test('chart: text table, JSON passthrough and query parameters', async () => {
   const e = pair();
-  const text = await e.rcat('chart', 'mrr', '-a', A, '--from', '2026-01-01', '--to', '2026-02-01', '--resolution', 'month', '--segment', 'country', '--filter', '[{"id":"platform","value":"ios"}]', '--selector', '{"a":1}', '--aggregate', 'average,total', '--no-realtime');
+  const text = await e.rcat('chart', 'mrr', '-a', A, '--from', '2026-01-01', '--to', '2026-02-01', '--resolution', 'month', '--segment', 'country', '--filter', '[{"name":"platform","values":["ios"]}]', '--selector', '{"a":1}', '--aggregate', 'average,total', '--no-realtime');
   assert.equal(text.status, 0);
   assert.match(text.stdout, /REVENUECAT_ALPHA_APIKEY \(Alpha App\): MRR \[month\]\n {2}2026-01-01 {2}12 {2}\(Total \/ MRR\)\n {2}2026-02-01 {2}15/);
   const q = seen.find((s) => s.path.endsWith('/charts/mrr'))!.query;
   assert.equal(q.get('realtime'), 'false');
-  assert.equal(q.get('filters'), '[{"id":"platform","value":"ios"}]');
+  assert.equal(q.get('filters'), '[{"name":"platform","values":["ios"]}]');
   assert.equal(q.get('selectors'), '{"a":1}');
   assert.equal(q.get('aggregate'), 'average,total');
   assert.equal(q.get('resolution'), 'month');
@@ -316,7 +316,7 @@ test('chart: unfamiliar value shapes fall back to pretty JSON', async () => {
 test('chart-options: text and JSON', async () => {
   const e = pair();
   const text = await e.rcat('chart-options', 'mrr', '-a', A);
-  assert.match(text.stdout, /resolutions: day, month\n {2}segments: country\n {2}filter platform: ios/);
+  assert.match(text.stdout, /resolutions: 0=Day, 2=Month\n {2}segments: country\n {2}filter platform: ios/);
   const out = await e.json('chart-options', 'mrr', '-a', A);
   assert.equal(out.results[0].options.resolutions.length, 2);
 });
